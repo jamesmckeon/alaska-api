@@ -24,7 +24,7 @@ public class CarServiceTests
     [Test]
     public void GetById_CarFound_ReturnsCar()
     {
-        var car = new Car(1, 0);
+        var car = new Car(1, 0, 0, 1);
 
         Repository.Setup(s => s.GetById(car.Id))
             .Returns(car);

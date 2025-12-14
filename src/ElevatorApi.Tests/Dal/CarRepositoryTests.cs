@@ -28,11 +28,15 @@ public class CarRepositoryTests
         SettingsOptions.Setup(x => x.Value)
             .Returns(new ElevatorSettings()
             {
-                CarCount = carCount
+                CarCount = carCount,
+                LobbyFloor = 0,
+                MinFloor = 0,
+                MaxFloor = 10
             });
 
         var expected = Enumerable.Range(1, carCount)
-            .Select(id => new Car((byte)id, 0))
+            .Select(id => new Car(
+                (byte)id, 0, 0, 10))
             .ToList().AsReadOnly();
 
         var actual = Sut.GetAll();
@@ -46,7 +50,9 @@ public class CarRepositoryTests
             .Returns(new ElevatorSettings()
             {
                 CarCount = 3,
-                LobbyFloor = -1
+                LobbyFloor = -1,
+                MinFloor = -2,
+                MaxFloor = 10
             });
 
         var actual = Sut.GetAll();
@@ -67,7 +73,7 @@ public class CarRepositoryTests
                 LobbyFloor = 1
             });
 
-        var expected = new Car(2, 1);
+        var expected = new Car(2, 1, 0, 1);
         var actual = Sut.GetById(expected.Id);
 
         Assert.That(actual, Is.Not.Null);

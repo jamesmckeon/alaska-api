@@ -28,9 +28,10 @@ public class CarRepository : ICarRepository
                          .Select(i => (byte)i))
             {
                 Cars.TryAdd(id, new Car(
-                    id, 
-                    SettingsOptions.Value.LobbyFloor));
-               
+                    id,
+                    SettingsOptions.Value.LobbyFloor,
+                    SettingsOptions.Value.MinFloor,
+                    SettingsOptions.Value.MaxFloor));
             }
         }
     }
