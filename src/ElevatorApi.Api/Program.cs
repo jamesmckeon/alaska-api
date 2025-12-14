@@ -1,3 +1,6 @@
+using ElevatorApi.Api;
+using ElevatorApi.Api.Config;
+using Microsoft.Extensions.Options;
 using NLog;
 using NLog.Web;
 
@@ -10,6 +13,11 @@ builder.Services.AddControllers();
 builder.Services.AddHealthChecks();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddSingleton<IValidateOptions<ElevatorSettings>, ElevatorSettingsValidator>();
+builder.Services.AddOptions<ElevatorSettings>()
+    .Bind(builder.Configuration.GetSection("ElevatorSettings"))
+    .ValidateOnStart();  // Fails fast at startup if invalid
 
 var app = builder.Build();
 app.MapControllers();
