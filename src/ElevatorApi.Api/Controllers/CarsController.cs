@@ -1,3 +1,4 @@
+using ElevatorApi.Api.Exceptions;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
@@ -28,6 +29,20 @@ public class CarsController : ControllerBase
         else
         {
             return Ok(MapCarResponse(car));
+        }
+    }
+
+    [HttpPost("{carId}/stops/{floorNumber}")]
+    public IActionResult AddStop(byte carId, sbyte floorNumber)
+    {
+        try
+        {
+            var car = CarService.AddStop(carId, floorNumber);
+            return Ok(MapCarResponse(car));
+        }
+        catch (CarNotFoundException ex)
+        {
+            return NotFound(ex.Message);
         }
     }
 

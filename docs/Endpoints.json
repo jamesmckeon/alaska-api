@@ -35,7 +35,7 @@
         }
     },
     "paths": {
-        "/cars/{carId}/destinations/{floorNumber}": {
+        "/cars/{carId}/stops/{floorNumber}": {
             "post": {
                 "description": "Assigns a floor to a car's list of destinations",
                 "parameters": [

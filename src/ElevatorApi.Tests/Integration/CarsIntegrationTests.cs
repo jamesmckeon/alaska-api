@@ -59,6 +59,8 @@ public class CarsIntegrationTests
         Client.Dispose();
     }
 
+    #region Index
+
     [Test]
     public async Task Index_CarExists_Returns200()
     {
@@ -84,8 +86,60 @@ public class CarsIntegrationTests
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
     }
 
+    #endregion
+
+    #region AddStop
+
+    [Test]
+    public async Task AddStop_CarExists_Returns200()
+    {
+        var carId = 1;
+        var floorNumber = ElevatorSettings.MinFloor;
+
+        var url = $"/api/cars/{carId}/Stops/{floorNumber}";
+        var response = await Post(url);
+
+        Assert.That(response.StatusCode,
+            Is.EqualTo(HttpStatusCode.OK));
+
+        var car = await response.Content
+            .ReadFromJsonAsync<CarResponse>();
+
+        Assert.That(car, Is.Not.Null);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(car.Id, Is.EqualTo(carId));
+            Assert.That(car.Stops, Does.Contain(floorNumber));
+        });
+    }
+
+    [Test]
+    public async Task AddStop_InvalidCarId_Returns404()
+    {
+        var carId = ElevatorSettings.CarCount + 1;
+        var floorNumber = ElevatorSettings.MinFloor;
+
+        var url = $"/api/cars/{carId}/Stops/{floorNumber}";
+        var response = await Post(url);
+
+        Assert.That(response.StatusCode,
+            Is.EqualTo(HttpStatusCode.NotFound));
+    }
+
+    #endregion
+
+    #region Helpers
+
     private async Task<HttpResponseMessage> Get(string endpoint)
     {
         return await Client.GetAsync(new Uri(endpoint));
     }
+
+    private async Task<HttpResponseMessage> Post(string endpoint)
+    {
+        return await Client.PostAsync(new Uri(endpoint), null);
+    }
+
+    #endregion
 }
