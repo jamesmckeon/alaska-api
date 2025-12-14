@@ -4,5 +4,5 @@ namespace ElevatorApi.Api.Services;
 
 public interface ICarService
 {
-    Car? GetById(int id);
+    Car? GetById(byte id);
 }

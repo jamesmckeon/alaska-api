@@ -14,8 +14,9 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Controllers\" />
+        <InternalsVisibleTo Include="ElevatorApi.Tests" />
     </ItemGroup>
+
 
     <ItemGroup>
       <None Remove="NLog.xsd" />
