@@ -31,4 +31,17 @@ public class CarService : ICarService
 
         return car;
     }
+
+    public Car MoveCar(byte carId)
+    {
+        var car = CarRepository.GetById(carId);
+
+        if (car == null)
+        {
+            throw new CarNotFoundException(carId);
+        }
+
+        car.MoveNext();
+        return car;
+    }
 }

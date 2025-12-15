@@ -62,4 +62,32 @@ public class CarServiceTests
     }
 
     #endregion
+
+    #region MoveCar
+
+    [Test]
+    public void MoveCar_CarNotFound_ReturnsNull()
+    {
+        byte carId = 1;
+        Repository.Setup(s => s.GetById(carId))
+            .Returns(null as Car);
+
+        Assert.Throws<CarNotFoundException>(() =>
+            Sut.MoveCar(carId));
+    }
+
+    [Test]
+    public void MoveCar_CarFound_MovesCar()
+    {
+        var car = new Car(1, 0, -1, 10);
+        Repository.Setup(s => s.GetById(car.Id))
+            .Returns(car);
+
+        car.AddStop(2);
+
+        var actual = Sut.MoveCar(car.Id);
+        Assert.That(actual.CurrentFloor, Is.EqualTo(2));
+    }
+
+    #endregion
 }
