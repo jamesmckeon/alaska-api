@@ -88,6 +88,21 @@ public sealed class Car : IEquatable<Car>
             : DescendingStops.Reverse().Concat(AscendingStops).ToList().AsReadOnly();
     }
 
+    public CarState State
+    {
+        get
+        {
+            if (Stops.Count == 0)
+            {
+                return CarState.Idle;
+            }
+            else
+            {
+                return NextFloor > CurrentFloor ? CarState.Ascending : CarState.Descending;
+            }
+        }
+    }
+
     public void MoveNext()
     {
         if (NextFloor.HasValue)
