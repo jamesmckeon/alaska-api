@@ -21,7 +21,7 @@ builder.Services.AddOptions<ElevatorSettings>()
     .ValidateOnStart();
 
 builder.Services.AddTransient<ICarService, CarService>();
-builder.Services.AddTransient<ICarRepository, CarRepository>();
+builder.Services.AddSingleton<ICarRepository, CarRepository>();
 
 var app = builder.Build();
 app.MapControllers();

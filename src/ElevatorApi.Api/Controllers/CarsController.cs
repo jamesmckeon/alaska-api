@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ElevatorApi.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v1/[controller]")]
 public class CarsController : ControllerBase
 {
     private ILogger<CarsController> Logger { get; }
@@ -38,6 +38,20 @@ public class CarsController : ControllerBase
         try
         {
             var car = CarService.AddStop(carId, floorNumber);
+            return Ok(MapCarResponse(car));
+        }
+        catch (CarNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+    }
+    
+    [HttpPost("{carId}/move")]
+    public IActionResult MoveCar(byte carId)
+    {
+        try
+        {
+            var car = CarService.MoveCar(carId);
             return Ok(MapCarResponse(car));
         }
         catch (CarNotFoundException ex)

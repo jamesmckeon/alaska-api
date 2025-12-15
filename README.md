@@ -24,9 +24,10 @@ The elevator system can be configured in `src/ElevatorApi.Api/appsettings.json`:
 ```json
 {
   "ElevatorSettings": {
-    "MinFloor": -2,        // Minimum valid floor number (supports basements)
+    "MinFloor": -2,        // Minimum valid floor number
     "MaxFloor": 50,        // Maximum valid floor number
-    "NumberOfCars": 3      // Number of elevator cars in the system
+    "NumberOfCars": 3,      // Number of elevator cars in the system
+    "LobbyFloor": 0.       // The start floor for all cars 
   }
 }
 ```

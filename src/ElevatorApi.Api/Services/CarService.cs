@@ -20,27 +20,16 @@ public class CarService : ICarService
 
     public Car AddStop(byte carId, sbyte floorNumber)
     {
-        var car = CarRepository.GetById(carId);
-
-        if (car == null)
-        {
-            throw new CarNotFoundException(carId);
-        }
-
+        var car = CarRepository.GetById(carId) ?? 
+                  throw new CarNotFoundException(carId);
         car.AddStop(floorNumber);
-
         return car;
     }
 
     public Car MoveCar(byte carId)
     {
-        var car = CarRepository.GetById(carId);
-
-        if (car == null)
-        {
-            throw new CarNotFoundException(carId);
-        }
-
+        var car = CarRepository.GetById(carId) ?? 
+                  throw new CarNotFoundException(carId);
         car.MoveNext();
         return car;
     }

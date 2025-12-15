@@ -15,6 +15,8 @@ public class CarsIntegrationTests
     private HttpClient Client { get; set; }
     private ElevatorSettings ElevatorSettings { get; set; }
 
+    private const string baseUrl = "/api/v1/cars";
+
     [OneTimeSetUp]
     public void OneTimeSetup()
     {
@@ -66,7 +68,7 @@ public class CarsIntegrationTests
     {
         byte carId = 1;
 
-        var response = await Get($"/api/cars/{carId}");
+        var response = await Get($"{baseUrl}/{carId}");
         var car = await response.Content.ReadFromJsonAsync<CarResponse>();
 
         Assert.That(car, Is.Not.Null);
@@ -82,7 +84,7 @@ public class CarsIntegrationTests
     public async Task Index_CarDoesntExist_ReturnsNotFound()
     {
         var carId = ElevatorSettings.CarCount + 1;
-        var response = await Get($"/api/cars/{carId}");
+        var response = await Get($"{baseUrl}/{carId}");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
     }
 
@@ -96,7 +98,7 @@ public class CarsIntegrationTests
         var carId = 1;
         var floorNumber = ElevatorSettings.MinFloor;
 
-        var url = $"/api/cars/{carId}/Stops/{floorNumber}";
+        var url = $"{baseUrl}/{carId}/Stops/{floorNumber}";
         var response = await Post(url);
 
         Assert.That(response.StatusCode,
@@ -111,6 +113,7 @@ public class CarsIntegrationTests
         {
             Assert.That(car.Id, Is.EqualTo(carId));
             Assert.That(car.Stops, Does.Contain(floorNumber));
+            Assert.That(car.NextFloor, Is.EqualTo(floorNumber));
         });
     }
 
@@ -120,7 +123,55 @@ public class CarsIntegrationTests
         var carId = ElevatorSettings.CarCount + 1;
         var floorNumber = ElevatorSettings.MinFloor;
 
-        var url = $"/api/cars/{carId}/Stops/{floorNumber}";
+        var url = $"{baseUrl}/{carId}/Stops/{floorNumber}";
+        var response = await Post(url);
+
+        Assert.That(response.StatusCode,
+            Is.EqualTo(HttpStatusCode.NotFound));
+    }
+
+    #endregion
+
+    #region MoveCar
+
+    [Test]
+    public async Task MoveCar_CarExists_Returns200()
+    {
+        var carId = 1;
+        var floorNumber = ElevatorSettings.MinFloor;
+
+        var stopsUrl = $"{baseUrl}/{carId}/Stops/{floorNumber}";
+        var stopsResponse = await Post(stopsUrl);
+        var car = await stopsResponse.Content
+            .ReadFromJsonAsync<CarResponse>();
+
+        Assert.That(car, Is.Not.Null);
+        var nextFloor = car.NextFloor;
+
+        var moveUrl = $"{baseUrl}/{carId}/Move";
+        var moveResponse = await Post(moveUrl);
+
+        Assert.That(moveResponse.StatusCode,
+            Is.EqualTo(HttpStatusCode.OK));
+        var movedCar = await moveResponse.Content
+            .ReadFromJsonAsync<CarResponse>();
+        Assert.That(movedCar, Is.Not.Null);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(movedCar.Id, Is.EqualTo(carId));
+            Assert.That(movedCar.CurrentFloor, Is.EqualTo(nextFloor));
+            Assert.That(movedCar.Stops, Is.Empty);
+            Assert.That(movedCar.NextFloor, Is.Null);
+        });
+    }
+
+    [Test]
+    public async Task MoveCar_InvalidCarId_Returns404()
+    {
+        var carId = ElevatorSettings.CarCount + 1;
+
+        var url = $"{baseUrl}/{carId}/Move";
         var response = await Post(url);
 
         Assert.That(response.StatusCode,
