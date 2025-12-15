@@ -1,5 +1,8 @@
+using ElevatorApi.Api.Exceptions;
+
 namespace ElevatorApi.Tests.Services;
 
+[Category("Unit")]
 public class CarServiceTests
 {
     private Mock<ICarRepository> Repository { get; set; }
@@ -24,15 +27,66 @@ public class CarServiceTests
     [Test]
     public void GetById_CarFound_ReturnsCar()
     {
-        var car = new Car()
-        {
-            Id = 1
-        };
+        var car = new Car(1, 0, 0, 1);
 
         Repository.Setup(s => s.GetById(car.Id))
             .Returns(car);
 
         Assert.That(Sut.GetById(car.Id), Is.EqualTo(car));
+    }
+
+    #endregion
+
+    #region AddStop
+
+    [Test]
+    public void AddStop_CarNotFound_ReturnsNull()
+    {
+        byte carId = 1;
+        Repository.Setup(s => s.GetById(carId))
+            .Returns(null as Car);
+
+        Assert.Throws<CarNotFoundException>(() =>
+            Sut.AddStop(carId, 1));
+    }
+
+    [Test]
+    public void AddStop_CarFound_AddsStop()
+    {
+        var car = new Car(1, 0, -1, 10);
+        Repository.Setup(s => s.GetById(car.Id))
+            .Returns(car);
+
+        var actual = Sut.AddStop(car.Id, 2);
+        Assert.That(actual.Stops, Does.Contain(2));
+    }
+
+    #endregion
+
+    #region MoveCar
+
+    [Test]
+    public void MoveCar_CarNotFound_ReturnsNull()
+    {
+        byte carId = 1;
+        Repository.Setup(s => s.GetById(carId))
+            .Returns(null as Car);
+
+        Assert.Throws<CarNotFoundException>(() =>
+            Sut.MoveCar(carId));
+    }
+
+    [Test]
+    public void MoveCar_CarFound_MovesCar()
+    {
+        var car = new Car(1, 0, -1, 10);
+        Repository.Setup(s => s.GetById(car.Id))
+            .Returns(car);
+
+        car.AddStop(2);
+
+        var actual = Sut.MoveCar(car.Id);
+        Assert.That(actual.CurrentFloor, Is.EqualTo(2));
     }
 
     #endregion
