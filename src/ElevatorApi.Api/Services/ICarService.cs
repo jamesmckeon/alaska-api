@@ -22,4 +22,12 @@ public interface ICarService
     /// <returns></returns>
     /// <exception cref="CarNotFoundException"/>
     Car MoveCar(byte carId);
+
+    /// <summary>
+    /// Finds the nearest car and adds a floor to its
+    /// list of stops
+    /// </summary>
+    /// <param name="floorNumber">The floor the car should stop at</param>
+    /// <returns></returns>
+    Car CallCar(sbyte floorNumber);
 }

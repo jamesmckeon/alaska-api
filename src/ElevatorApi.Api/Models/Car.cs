@@ -7,6 +7,16 @@ namespace ElevatorApi.Api.Models;
 
 public sealed class Car : IEquatable<Car>
 {
+    private (sbyte MinFloor, sbyte MaxFloor) FloorRange { get; }
+    public byte Id { get; }
+
+    public IReadOnlyCollection<sbyte> Stops => GetStops();
+    public sbyte CurrentFloor { get; private set; }
+    public sbyte? NextFloor => Stops.Count > 0 ? Stops.First() : null;
+    private bool? Ascending { get; set; }
+    private SortedSet<sbyte> AscendingStops { get; }
+    private SortedSet<sbyte> DescendingStops { get; }
+
     internal Car(byte id, sbyte initialFloor, sbyte minFloor, sbyte maxFloor)
     {
         if (minFloor >= maxFloor)
@@ -22,16 +32,10 @@ public sealed class Car : IEquatable<Car>
         DescendingStops = new();
     }
 
-    private (sbyte MinFloor, sbyte MaxFloor) FloorRange { get; }
-    public byte Id { get; }
-
-    public IReadOnlyCollection<sbyte> Stops => GetStops();
-
-    public sbyte CurrentFloor { get; private set; }
-    public sbyte? NextFloor => Stops.Count > 0 ? Stops.First() : null;
-    private bool? Ascending { get; set; }
-    private SortedSet<sbyte> AscendingStops { get; }
-    private SortedSet<sbyte> DescendingStops { get; }
+    internal Car(byte id, IOptions<ElevatorSettings> settings) :
+        this(id, settings.Value.LobbyFloor, settings.Value.MinFloor, settings.Value.MaxFloor)
+    {
+    }
 
     public bool Equals(Car? other)
     {

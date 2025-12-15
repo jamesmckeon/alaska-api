@@ -1,4 +1,7 @@
+using System.Collections.ObjectModel;
+using ElevatorApi.Api.Config;
 using ElevatorApi.Api.Exceptions;
+using Microsoft.Extensions.Options;
 
 namespace ElevatorApi.Tests.Services;
 
@@ -6,13 +9,15 @@ namespace ElevatorApi.Tests.Services;
 public class CarServiceTests
 {
     private Mock<ICarRepository> Repository { get; set; }
+    private Mock<IOptions<ElevatorSettings>> Settings { get; set; }
     private CarService Sut { get; set; }
 
     [SetUp]
     public void Setup()
     {
         Repository = new();
-        Sut = new(Repository.Object);
+        Settings = new();
+        Sut = new(Repository.Object, Settings.Object);
     }
 
     #region GetById
@@ -90,4 +95,154 @@ public class CarServiceTests
     }
 
     #endregion
+
+    #region CallCar
+
+    [Test]
+    public void CallCar_AllIdle_AssignsCar()
+    {
+        var car = Sut.CallCar(1);
+        Assert.That(car.NextFloor, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void CallCar_AscendingNearest_AssignsAscendingCar()
+    {
+        var cars = SetupCars();
+        var car = cars.First();
+
+        car.AddStop(8);
+
+        var assigned = Sut.CallCar(7);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(assigned.NextFloor, Is.EqualTo(7));
+            Assert.That(assigned.Stops, Is.EqualTo(new sbyte[] { 7, 8 }));
+        });
+    }
+
+    [Test]
+    public void CallCar_CarAtFloor_AssignsCar()
+    {
+        var cars = SetupCars();
+        var expected = cars.First();
+
+        expected.AddStop(1);
+        expected.MoveNext();
+
+        var actual = Sut.CallCar(1);
+
+        Assert.That(actual, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void CallCar_NoneIdle_AssignsClosest()
+    {
+        var cars = SetupCars();
+        var car = cars.First();
+
+        car.AddStop(8);
+        car.MoveNext();
+        car.AddStop(9);
+
+        var second = cars.Skip(1).First();
+        second.AddStop(6);
+        second.AddStop(5);
+
+        var expected = cars.Last();
+        expected.AddStop(1);
+
+        var assigned = Sut.CallCar(7);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(assigned.NextFloor, Is.EqualTo(1));
+            Assert.That(assigned.Stops, Is.EqualTo(new sbyte[] { 1, 7 }));
+        });
+    }
+
+    [Test]
+    public void CallCar_DescendingNearest_AssignsDescendingCar()
+    {
+        var cars = SetupCars();
+        var car = cars.First();
+
+        car.AddStop(-2);
+
+        var assigned = Sut.CallCar(-1);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(assigned.NextFloor, Is.EqualTo(-1));
+            Assert.That(assigned.Stops, Is.EqualTo(new sbyte[] { -1, -2 }));
+        });
+    }
+
+    [Test]
+    public void CallCar_IdleNearest_AssignsIdleCar()
+    {
+        var cars = SetupCars();
+        var ascendingCar = cars.First();
+        ascendingCar.AddStop(3);
+
+        var descendingCar = cars.Skip(1).First();
+        descendingCar.AddStop(-1);
+
+        var expected = cars.Last();
+        var actual = Sut.CallCar(1);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(actual.Id, Is.EqualTo(expected.Id));
+            Assert.That(actual.NextFloor, Is.EqualTo(1));
+            Assert.That(actual.Stops, Is.EqualTo(new sbyte[] { 1 }));
+        });
+    }
+
+    [TestCase(-1)]
+    [TestCase(6)]
+    public void CallCar_InvalidFloorNumber_ThrowsExpected(sbyte floorNumber)
+    {
+        Settings.Setup(s => s.Value.MinFloor)
+            .Returns(0);
+        Settings.Setup(s => s.Value.MaxFloor)
+            .Returns(5);
+        var ex = Assert.Throws<ArgumentOutOfRangeException>(() =>
+            Sut.CallCar(floorNumber));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(ex.ParamName, Is.EqualTo("floorNumber"));
+            Assert.That(ex.Message, Does.StartWith("floorNumber must be between 0 and 5"));
+        });
+    }
+
+    #endregion
+
+    /// <summary>
+    /// Creates a list of test cars and sets up
+    /// repository to return them, also sets up ElevatorSettings
+    /// </summary>
+    private List<Car> SetupCars()
+    {
+        //TODO this smells
+        Settings.Setup(s => s.Value.LobbyFloor)
+            .Returns(0);
+        Settings.Setup(s => s.Value.MinFloor)
+            .Returns(-2);
+        Settings.Setup(s => s.Value.MaxFloor)
+            .Returns(10);
+
+        var cars = Enumerable.Range(1, 3).Select(i =>
+                new Car(
+                    (byte)i,
+                    Settings.Object))
+            .ToList();
+
+        Repository.Setup(s => s.GetAll())
+            .Returns(cars);
+
+        return cars;
+    }
 }

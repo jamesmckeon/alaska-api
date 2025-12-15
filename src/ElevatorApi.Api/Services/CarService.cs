@@ -1,16 +1,20 @@
+using ElevatorApi.Api.Config;
 using ElevatorApi.Api.Dal;
 using ElevatorApi.Api.Exceptions;
+using Microsoft.Extensions.Options;
 
 namespace ElevatorApi.Api.Services;
 
 public class CarService : ICarService
 {
     private ICarRepository CarRepository { get; }
+    private IOptions<ElevatorSettings> Settings { get; }
 
-    public CarService(ICarRepository carRepository)
+    public CarService(ICarRepository carRepository, IOptions<ElevatorSettings> settings)
     {
         CarRepository = carRepository ??
                         throw new ArgumentNullException(nameof(carRepository));
+        Settings = settings ?? throw new ArgumentNullException(nameof(settings));
     }
 
     public Car? GetById(byte id)
@@ -20,7 +24,7 @@ public class CarService : ICarService
 
     public Car AddStop(byte carId, sbyte floorNumber)
     {
-        var car = CarRepository.GetById(carId) ?? 
+        var car = CarRepository.GetById(carId) ??
                   throw new CarNotFoundException(carId);
         car.AddStop(floorNumber);
         return car;
@@ -28,9 +32,14 @@ public class CarService : ICarService
 
     public Car MoveCar(byte carId)
     {
-        var car = CarRepository.GetById(carId) ?? 
+        var car = CarRepository.GetById(carId) ??
                   throw new CarNotFoundException(carId);
         car.MoveNext();
         return car;
+    }
+
+    public Car CallCar(sbyte floorNumber)
+    {
+        throw new NotImplementedException();
     }
 }
