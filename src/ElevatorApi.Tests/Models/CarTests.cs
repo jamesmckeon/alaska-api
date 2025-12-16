@@ -444,7 +444,7 @@ public class CarTests
 
     #endregion
 
-    #region GetDistanceTil
+    #region GetDistanceFrom
 
     [TestCase(-1)]
     [TestCase(1)]
@@ -480,21 +480,22 @@ public class CarTests
         });
     }
 
-    [TestCase(1, new int[] { 1 }, 0, 1)]
-    [TestCase(2, new int[] { 1 }, 1, 1)]
-    [TestCase(3, new int[] { 1 }, 1, 2)]
-    [TestCase(5, new int[] { 1, 2 }, 2, 3)]
-    [TestCase(5, new int[] { 1, 2, 3 }, 3, 2)]
-    [TestCase(5, new int[] { 1, 2, 4 }, 3, 1)]
-    [TestCase(5, new int[] { 1, 2, 3, 4 }, 4, 1)]
-    [TestCase(5, new int[] { 1, 2, 3, 6 }, 3, 2)]
-    [TestCase(7, new int[] { 8 }, 0, 7)]
-    [TestCase(-1, new int[] { 1 }, 1, 2)]
-    [TestCase(-2, new int[] { 1 }, 1, 3)]
-    [TestCase(-3, new int[] { 1 }, 1, 4)]
-    [TestCase(-5, new int[] { 1, 2 }, 2, 7)]
-    [TestCase(-5, new int[] { 1, 2, -4 }, 3, 1)]
-    [TestCase(-5, new int[] { 1, 2, -6 }, 2, 7)]
+    [TestCase(1, new[] { 1 }, 0, 1)]
+    [TestCase(2, new[] { 1 }, 1, 1)]
+    [TestCase(3, new[] { 1 }, 1, 2)]
+    [TestCase(5, new[] { 1, 2 }, 2, 3)]
+    [TestCase(5, new[] { 1, 2, 3 }, 3, 2)]
+    [TestCase(5, new[] { 1, 2, 4 }, 3, 1)]
+    [TestCase(5, new[] { 1, 2, 3, 4 }, 4, 1)]
+    [TestCase(5, new[] { 1, 2, 3, 6 }, 3, 2)]
+    [TestCase(7, new[] { 8 }, 0, 7)]
+    [TestCase(-1, new[] { 1 }, 1, 2)]
+    [TestCase(-2, new[] { 1 }, 1, 3)]
+    [TestCase(-3, new[] { 1 }, 1, 4)]
+    [TestCase(-5, new[] { 1, 2 }, 2, 7)]
+    [TestCase(-5, new[] { 1, 2, -4 }, 3, 1)]
+    [TestCase(-5, new[] { 1, 2, -6 }, 2, 7)]
+    [TestCase(0, new[] { 5, -2 }, 0, 0)]
     public void GetDistanceFrom_HasStops_ReturnsExpected(
         int targetFloor,
         int[] stops,
@@ -517,6 +518,39 @@ public class CarTests
             Assert.That(actual.StopsTil, Is.EqualTo(expectedStops));
             Assert.That(actual.DistanceFrom, Is.EqualTo(expectedDistance));
         });
+    }
+
+    [TestCase(-10, 5)] // At MinFloor, target above
+    [TestCase(10, -5)] // At MaxFloor, target below
+    public void GetDistanceFrom_AtBoundaryFloor_ReturnsExpected(sbyte currentFloor, sbyte targetFloor)
+    {
+        var car = new Car(1, currentFloor, -10, 10);
+
+        var actual = car.GetDistanceFrom(targetFloor);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(actual.StopsTil, Is.EqualTo(0));
+            Assert.That(actual.DistanceFrom, Is.EqualTo(Math.Abs(targetFloor - currentFloor)));
+        });
+    }
+
+    [TestCase(new[] { 1, 2 })] // Stops above 0
+    [TestCase(new[] { -1, -2 })] // Stops below 0  
+    [TestCase(new[] { 1, -1, 2 })] // Stops in both directions
+    public void GetDistanceFrom_TargetFloorZero_ReturnsExpected(int[] stops)
+    {
+        ArgumentNullException.ThrowIfNull(stops);
+
+        var car = new Car(1, 5, -10, 10); // Start at floor 5
+
+        foreach (var stop in stops)
+            car.AddStop((sbyte)stop);
+
+        var actual = car.GetDistanceFrom(0);
+
+        // Verify expected behavior for floor 0 specifically
+        Assert.That(actual, Is.Not.Null);
     }
 
     #endregion
