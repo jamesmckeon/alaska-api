@@ -16,7 +16,16 @@ public class CarServiceTests
     public void Setup()
     {
         Repository = new();
+
         Settings = new();
+        Settings.Setup(s => s.Value).Returns(new ElevatorSettings()
+        {
+            MinFloor = -2,
+            MaxFloor = 10,
+            LobbyFloor = 0,
+            CarCount = 3
+        });
+
         Sut = new(Repository.Object, Settings.Object);
     }
 
@@ -145,21 +154,19 @@ public class CarServiceTests
         });
     }
 
-    [TestCase(-1)]
-    [TestCase(6)]
+    [TestCase(-3)]
+    [TestCase(11)]
     public void CallCar_InvalidFloorNumber_ThrowsExpected(sbyte floorNumber)
     {
-        Settings.Setup(s => s.Value.MinFloor)
-            .Returns(0);
-        Settings.Setup(s => s.Value.MaxFloor)
-            .Returns(5);
         var ex = Assert.Throws<ArgumentOutOfRangeException>(() =>
             Sut.CallCar(floorNumber));
 
         Assert.Multiple(() =>
         {
             Assert.That(ex.ParamName, Is.EqualTo("floorNumber"));
-            Assert.That(ex.Message, Does.StartWith("floorNumber must be between 0 and 5"));
+            Assert.That(ex.Message, Does.StartWith($"floorNumber must be between " +
+                                                   $"{Settings.Object.Value.MinFloor} " +
+                                                   $"and {Settings.Object.Value.MaxFloor}"));
         });
     }
 
@@ -170,13 +177,12 @@ public class CarServiceTests
         // the highest stop for all cars
         var (first, second, third) = SetupCars();
 
-        first.AddStop(1);
+        MoveTo(first, 1);
+        MoveTo(second, 2);
+        MoveTo(third, 3);
+        
         first.AddStop(3);
-
-        second.AddStop(2);
         second.AddStop(5);
-
-        third.AddStop(3);
         third.AddStop(6);
 
         var actual = Sut.CallCar(8);
@@ -184,8 +190,7 @@ public class CarServiceTests
         Assert.Multiple(() =>
         {
             Assert.That(actual, Is.EqualTo(third));
-            Assert.That(actual.NextFloor, Is.EqualTo(3));
-            Assert.That(actual.Stops, Is.EqualTo(new sbyte[] { 3, 6, 8 }));
+            Assert.That(actual.Stops, Is.EqualTo(new sbyte[] { 6, 8 }));
         });
     }
 
@@ -194,13 +199,12 @@ public class CarServiceTests
     {
         var (first, second, third) = SetupCars();
 
-        first.AddStop(1);
+        MoveTo(first, 1);
+        MoveTo(second, 2);
+        MoveTo(third, 3);
+
         first.AddStop(7);
-
-        second.AddStop(2);
         second.AddStop(5);
-
-        third.AddStop(3);
         third.AddStop(6);
 
         var actual = Sut.CallCar(4);
@@ -208,8 +212,7 @@ public class CarServiceTests
         Assert.Multiple(() =>
         {
             Assert.That(actual, Is.EqualTo(third));
-            Assert.That(actual.NextFloor, Is.EqualTo(4));
-            Assert.That(actual.Stops, Is.EqualTo(new sbyte[] { 3, 4, 6 }));
+            Assert.That(actual.Stops, Is.EqualTo(new sbyte[] { 4, 6 }));
         });
     }
 
@@ -221,22 +224,20 @@ public class CarServiceTests
         // nearest last stop to the called floor
         var (first, second, third) = SetupCars();
 
-        first.AddStop(1);
+        MoveTo(first, 1);
+        MoveTo(second, 2);
+        MoveTo(third, 3);
+
         first.AddStop(8);
-
-        second.AddStop(2);
         second.AddStop(7);
-
-        third.AddStop(3);
         third.AddStop(6);
 
-        var actual = Sut.CallCar(0);
+        var actual = Sut.CallCar(-1);
 
         Assert.Multiple(() =>
         {
             Assert.That(actual, Is.EqualTo(third));
-            Assert.That(actual.NextFloor, Is.EqualTo(3));
-            Assert.That(actual.Stops, Is.EqualTo(new sbyte[] { 3, 6, 8 }));
+            Assert.That(actual.Stops, Is.EqualTo(new sbyte[] { 6, -1 }));
         });
     }
 
@@ -245,9 +246,16 @@ public class CarServiceTests
     {
         var (first, second, third) = SetupCars();
 
-        AddStops(first, 6, 3, 2, 1);
-        AddStops(second, 7, 5, 1);
-        AddStops(third, 6, 5, 4, 2, 1);
+        // advance cars to an upper floor
+        // so they can descend
+        MoveTo(first, 6);
+        MoveTo(second, 7);
+        MoveTo(third, 6);
+
+        // add descending stops
+        AddStops(first, 3, 2, 1);
+        AddStops(second, 5, 1);
+        AddStops(third, 5, 4, 2, 1);
 
         var actual = Sut.CallCar(0);
 
@@ -255,7 +263,7 @@ public class CarServiceTests
         {
             // SUT should assign car with fewest stops
             Assert.That(actual, Is.EqualTo(second));
-            Assert.That(actual.Stops, Is.EqualTo(new sbyte[] { 7, 5, 1, 0 }));
+            Assert.That(actual.Stops, Is.EqualTo(new sbyte[] { 5, 1, 0 }));
         });
     }
 
@@ -264,9 +272,15 @@ public class CarServiceTests
     {
         var (first, second, third) = SetupCars();
 
-        AddStops(first, 8, 6, 1);
-        AddStops(second, 7, 4, 0);
-        AddStops(third, 10, 8, 4, 0);
+        // move cars to an upper floor to establish
+        // descending direction
+        MoveTo(first, 8);
+        MoveTo(second, 7);
+        MoveTo(third, 10);
+
+        AddStops(first, 6, 1);
+        AddStops(second, 4, 0);
+        AddStops(third, 8, 4, 0);
 
         var actual = Sut.CallCar(-2);
 
@@ -274,7 +288,7 @@ public class CarServiceTests
         {
             Assert.That(actual, Is.EqualTo(second));
             Assert.That(actual.Stops,
-                Is.EqualTo(new sbyte[] { 7, 4, 0, -2 }));
+                Is.EqualTo(new sbyte[] { 4, 0, -2 }));
         });
     }
 
@@ -283,9 +297,13 @@ public class CarServiceTests
     {
         var (first, second, third) = SetupCars();
 
-        AddStops(first, 8, 6, 1);
-        AddStops(second, 7, 4);
-        AddStops(third, 10, 8, 4, 0);
+        MoveTo(first, 8);
+        MoveTo(second, 7);
+        MoveTo(third, 10);
+
+        AddStops(first, 6, 1);
+        AddStops(second, 4);
+        AddStops(third, 8, 4, 0);
 
         var actual = Sut.CallCar(5);
 
@@ -293,7 +311,7 @@ public class CarServiceTests
         {
             Assert.That(actual, Is.EqualTo(second));
             Assert.That(actual.Stops,
-                Is.EqualTo(new sbyte[] { 7, 5, 4 }));
+                Is.EqualTo(new sbyte[] { 5, 4 }));
         });
     }
 
@@ -302,9 +320,13 @@ public class CarServiceTests
     {
         var (first, second, third) = SetupCars();
 
-        AddStops(first, 8, 4);
-        AddStops(second, 7, 3);
-        AddStops(third, 10, 8, 4);
+        MoveTo(first, 8);
+        MoveTo(second, 7);
+        MoveTo(third, 10);
+
+        AddStops(first, 4);
+        AddStops(second, 3);
+        AddStops(third, 8, 4);
 
         var actual = Sut.CallCar(5);
 
@@ -312,7 +334,7 @@ public class CarServiceTests
         {
             Assert.That(actual, Is.EqualTo(first));
             Assert.That(actual.Stops,
-                Is.EqualTo(new sbyte[] { 8, 5, 4 }));
+                Is.EqualTo(new sbyte[] { 5, 4 }));
         });
     }
 
@@ -335,17 +357,6 @@ public class CarServiceTests
     /// </summary>
     private ReadOnlyCollection<Car> SetupAllCars()
     {
-        var settings = new ElevatorSettings()
-        {
-            CarCount = 3,
-            LobbyFloor = 0,
-            MinFloor = -2,
-            MaxFloor = 10
-        };
-
-        Settings.Setup((s => s.Value))
-            .Returns(settings);
-
         var cars = Enumerable.Range(1, 3).Select(i =>
                 new Car(
                     (byte)i,
@@ -369,6 +380,21 @@ public class CarServiceTests
         {
             car.AddStop(floor);
         }
+    }
+
+    /// <summary>
+    /// Assigns <paramref name="floorNumber"/> to <paramref name="car"/>'s stops
+    /// and calls car.MoveNext()
+    /// </summary>
+    private static void MoveTo(Car car, sbyte floorNumber)
+    {
+        if (car.Stops.Count > 0)
+        {
+            throw new ArgumentException("car cannot have any stops", nameof(car));
+        }
+
+        car.AddStop(floorNumber);
+        car.MoveNext();
     }
 
     #endregion

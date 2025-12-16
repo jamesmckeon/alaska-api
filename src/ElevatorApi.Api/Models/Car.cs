@@ -2,9 +2,11 @@ using ElevatorApi.Api.Config;
 using Microsoft.Extensions.Options;
 using Microsoft.VisualBasic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 
 namespace ElevatorApi.Api.Models;
 
+[DebuggerDisplay("Id = {Id}; Current={CurrentFloor}; Next={NextFloor}")]
 public sealed class Car : IEquatable<Car>
 {
     private readonly Lock _carLock = new();
