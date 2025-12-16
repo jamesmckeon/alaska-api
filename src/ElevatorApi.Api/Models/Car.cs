@@ -170,22 +170,23 @@ public sealed class Car : IEquatable<Car>
     /// <returns>the number of the car's closest stop or null if car has no stops</returns>
     sbyte? LastFloorTil(sbyte floorNumber)
     {
-        if (State == CarState.Idle || CurrentFloor == floorNumber)
-            return null;
-
-        // regardless of car direction, if floorNumber is positive
-        // get highest floor below floorNumber
-        // otherwise get lowest floor above floorNumber
-
-        if (floorNumber < 0)
+        lock (_carLock)
         {
-            return Stops.Any(s => s < 0 && s > floorNumber)
-                ? Stops.Where(s => s < 0 && s > floorNumber).Min()
-                : Stops.Max();
-        }
-        else
-        {
-            return Stops.Any(s => s < floorNumber) ? Stops.Where(s => s < floorNumber).Max() : (sbyte)0;
+            if (State == CarState.Idle || CurrentFloor == floorNumber)
+                return null;
+
+            if (floorNumber < 0)
+            {
+                return Stops.Any(s => s < 0 && s > floorNumber)
+                    ? Stops.Where(s => s < 0 && s > floorNumber).Min()
+                    : Stops.Max();
+            }
+            else
+            {
+                return Stops.Any(s => s < floorNumber)
+                    ? Stops.Where(s => s < floorNumber).Max()
+                    : (sbyte)0;
+            }
         }
     }
 
@@ -197,24 +198,27 @@ public sealed class Car : IEquatable<Car>
     /// or an empty list if car has no stops</returns>
     List<sbyte> StopsTil(sbyte floorNumber)
     {
-        if (Stops.Count == 0)
-            return [];
-
-        var stops = new List<sbyte>();
-
-        foreach (var stop in Stops)
+        lock (_carLock)
         {
-            if (floorNumber > 0 && stop < floorNumber)
-            {
-                stops.Add(stop);
-            }
-            else if (floorNumber < 0 && stop > floorNumber)
-            {
-                stops.Add(stop);
-            }
-        }
+            if (Stops.Count == 0)
+                return [];
 
-        return stops;
+            var stops = new List<sbyte>();
+
+            foreach (var stop in Stops)
+            {
+                if (floorNumber > 0 && stop < floorNumber)
+                {
+                    stops.Add(stop);
+                }
+                else if (floorNumber < 0 && stop > floorNumber)
+                {
+                    stops.Add(stop);
+                }
+            }
+
+            return stops;
+        }
     }
 
     #endregion
