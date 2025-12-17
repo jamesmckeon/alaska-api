@@ -180,6 +180,37 @@ public class CarsIntegrationTests
 
     #endregion
 
+    #region CallCar
+
+    [Test]
+    public async Task CallCar_ValidFloor_Returns200()
+    {
+        var floorNumber = ElevatorSettings.MinFloor;
+
+        var url = $"{baseUrl}/call/{floorNumber}";
+        var response = await Post(url);
+
+        Assert.That(response.StatusCode,
+            Is.EqualTo(HttpStatusCode.OK));
+
+        var car = await response.Content.ReadFromJsonAsync<CarResponse>();
+
+        Assert.That(car, Is.Not.Null);
+        Assert.That(car.NextFloor, Is.EqualTo(floorNumber));
+    }
+
+    [Test]
+    public async Task CallCar_InvalidFloorNumber_Returns400()
+    {
+        var url = $"{baseUrl}/call/{ElevatorSettings.MinFloor - 1}";
+        var response = await Post(url);
+
+        Assert.That(response.StatusCode,
+            Is.EqualTo(HttpStatusCode.BadRequest));
+    }
+
+    #endregion
+
     #region Helpers
 
     private async Task<HttpResponseMessage> Get(string endpoint)

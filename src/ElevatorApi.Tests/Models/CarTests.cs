@@ -446,9 +446,9 @@ public class CarTests
 
     #region GetDistanceFrom
 
-    [TestCase(-1)]
-    [TestCase(1)]
-    [TestCase(0)]
+    [TestCase((sbyte)-1)]
+    [TestCase((sbyte)1)]
+    [TestCase((sbyte)0)]
     public void GetDistanceFrom_Idle_ReturnsExpected(sbyte floorNumber)
     {
         var car = new Car(1, 0, -10, 10);

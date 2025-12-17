@@ -59,6 +59,20 @@ public class CarsController : ControllerBase
             return NotFound(ex.Message);
         }
     }
+    
+    [HttpPost("call/{floorNumber}")]
+    public IActionResult CallCar(sbyte floorNumber)
+    {
+        try
+        {
+            var car = CarService.CallCar(floorNumber);
+            return Ok(MapCarResponse(car));
+        }
+        catch (ArgumentOutOfRangeException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
 
     private static CarResponse MapCarResponse(Car car) =>
         new(car.Id, car.NextFloor, car.CurrentFloor, car.Stops);
