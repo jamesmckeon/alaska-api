@@ -15,13 +15,29 @@ public sealed class Car : IEquatable<Car>
 
     private (sbyte MinFloor, sbyte MaxFloor) FloorRange { get; }
     public byte Id { get; }
+
+    /// <summary>
+    /// The stops/floor number currently assigned to the car
+    /// </summary>
     public IReadOnlyCollection<sbyte> Stops => GetStops();
+
+    /// <summary>
+    /// The floor # that the car is currently on
+    /// </summary>
     public sbyte CurrentFloor { get; private set; }
+
+    /// <summary>
+    /// The floor # the car will advance to next, if present
+    /// </summary>
     public sbyte? NextFloor => Stops.Count > 0 ? Stops.First() : null;
+
     private bool? Ascending { get; set; }
     private SortedSet<sbyte> AscendingStops { get; }
     private SortedSet<sbyte> DescendingStops { get; }
 
+    /// <summary>
+    /// The current car's current state (<seealso cref="CarState"/>
+    /// </summary>
     public CarState State
     {
         get
@@ -87,6 +103,12 @@ public sealed class Car : IEquatable<Car>
 
     #region Methods
 
+    /// <summary>
+    /// Adds a stop to the car
+    /// </summary>
+    /// <param name="floorNumber"></param>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown
+    /// when <param name="floorNumber"/> is invalid</exception>
     public void AddStop(sbyte floorNumber)
     {
         ValidateFloorNumber(floorNumber);
@@ -132,6 +154,9 @@ public sealed class Car : IEquatable<Car>
         }
     }
 
+    /// <summary>
+    /// Moves the car to its next stop
+    /// </summary>
     public void MoveNext()
     {
         lock (_carLock)
@@ -150,7 +175,12 @@ public sealed class Car : IEquatable<Car>
         AscendingStops.Remove(floorNumber);
     }
 
-    public CarFloorDistance GetDistanceFrom(sbyte floorNumber)
+    /// <summary>
+    /// Determines the car's distance from and stops until <param name="floorNumber"/>
+    /// and returns a CarFloorDistance instance
+    /// </summary>
+    /// <param name="floorNumber">the floor # to measure the can's proximity against</param>
+    public CarDistance GetDistanceFrom(sbyte floorNumber)
     {
         var lastFloor = LastFloorTil(floorNumber);
         var distance = Math.Abs(floorNumber - (lastFloor ?? CurrentFloor));
