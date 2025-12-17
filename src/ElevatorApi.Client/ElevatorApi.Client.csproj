@@ -5,7 +5,11 @@
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <NoWarn>CA1303</NoWarn>
+        <NoWarn>$(NoWarn);CA1303</NoWarn>
     </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\ElevatorApi.Api\ElevatorApi.Api.csproj" />
+    </ItemGroup>
 
 </Project>
