@@ -2,13 +2,8 @@ using ElevatorApi.Api;
 using ElevatorApi.Api.Config;
 using ElevatorApi.Api.Dal;
 using Microsoft.Extensions.Options;
-using NLog;
-using NLog.Web;
 
 var builder = WebApplication.CreateBuilder(args);
-
-builder.Logging.ClearProviders();
-builder.Host.UseNLog();
 
 builder.Services.AddControllers();
 builder.Services.AddHealthChecks();
@@ -34,4 +29,3 @@ if (app.Environment.IsDevelopment())
 }
 
 app.Run();
-
