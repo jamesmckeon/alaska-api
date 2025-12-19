@@ -11,5 +11,12 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     }
+  },
+  "Demo": {
+    "commandName": "Project",
+    "environmentVariables": {
+      "ASPNETCORE_ENVIRONMENT": "Demo"
+    },
+    "applicationUrl": "http://localhost:8080"
   }
 }
