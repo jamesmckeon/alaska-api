@@ -2,7 +2,8 @@ namespace ElevatorApi.Api.Exceptions;
 
 public class FloorNotFoundException : Exception
 {
-    public FloorNotFoundException(sbyte floorNumber) : base($"Floor #{floorNumber} doesn't exist")
+    public FloorNotFoundException(string paramName, sbyte minFloor, sbyte maxFloor) :
+        base($"{paramName} must be between {minFloor} and {maxFloor}")
     {
     }
 
