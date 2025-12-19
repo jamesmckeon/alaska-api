@@ -11,7 +11,7 @@ void Exit(string message)
     Console.WriteLine(message);
     Console.WriteLine("Press any key to exit...");
     Console.ReadKey();
-    return;
+    // throw new ApplicationException("Application terminated");
 }
 
 try
@@ -63,8 +63,13 @@ try
         }
 
         var car = await response.Content.ReadFromJsonAsync<CarResponse>();
+        if (car == null)
+        {
+            Exit($"Error: {endpoint} returned null response.");
+        }
+
         Console.WriteLine($"Response: {JsonSerializer.Serialize(car)}");
-        return car;
+        return car!;
     };
 
     var moveCar = async (CarResponse carToMove) =>
@@ -79,10 +84,15 @@ try
         }
 
         var movedCar = await response.Content.ReadFromJsonAsync<CarResponse>();
+        if (movedCar == null)
+        {
+            Exit($"Error: move endpoint returned null response.");
+        }
+
         Console.WriteLine($"Response: {JsonSerializer.Serialize(movedCar)}");
         Console.WriteLine("");
 
-        return movedCar;
+        return movedCar!;
     };
 
     #endregion
@@ -91,44 +101,37 @@ try
     await ping("/health");
     Console.WriteLine();
 
-    Console.WriteLine("This simulates a building with two elevators, a basement floor, a lobby, " + 
-                      "and 5 floors above it.  Both cars start at the lobby by default.");
-    Console.WriteLine();
-    
-    Console.WriteLine("Car #1 initial state ...");
-    await pingCar("/cars/1", HttpMethod.Get);
-    
-    Console.WriteLine("Car #2 initial state ...");
-    await pingCar("/cars/2", HttpMethod.Get);
+    Console.WriteLine("Person on floor 1 calls elevator ...");
+    var car1 = await pingCar("/cars/call/1", HttpMethod.Post);
     Console.WriteLine();
 
-    Console.WriteLine("Requesting car for floor #1 ...");
-    var firstFloor = await pingCar("/cars/call/1", HttpMethod.Post);
+    Console.WriteLine($"Retrieving car #{car1.Id} status ...");
+    car1 = await pingCar($"/cars/{car1.Id}", HttpMethod.Get);
     Console.WriteLine();
 
-    await moveCar(firstFloor);
-/*
-    Console.WriteLine($"Adding stop to car #{lobby.Id} ...");
-    await pingCar($"/cars/{lobby.Id}/stops/2", HttpMethod.Post);
+    await moveCar(car1);
+
+    Console.WriteLine($"Person in car #{car1.Id} presses button for floor 4 ...");
+    await pingCar($"/cars/{car1.Id}/stops/4", HttpMethod.Post);
     Console.WriteLine();
 
-    Console.WriteLine($"Adding stop to car #{lobby.Id} ...");
-    await pingCar($"/cars/{lobby.Id}/stops/5", HttpMethod.Post);
+    Console.WriteLine($"Checking car #{car1.Id} destinations ...");
+    await pingCar($"/cars/{car1.Id}", HttpMethod.Get);
     Console.WriteLine();
 
-    await moveCar(lobby);
+    car1 = await moveCar(car1);
 
-    Console.WriteLine("Requesting car for floor #-2 ...");
-    var basement = await pingCar("/cars/call/-2", HttpMethod.Post);
+    Console.WriteLine("Person on floor -1 calls elevator ...");
+    var car2 = await pingCar("/cars/call/-1", HttpMethod.Post);
     Console.WriteLine();
 
-    Console.WriteLine("Requesting car for floor #5 ...");
-    var fifthFloor = await pingCar("/cars/call/5", HttpMethod.Post);
+    Console.WriteLine($"Checking car #{car2.Id} status ...");
+    await pingCar($"/cars/{car2.Id}", HttpMethod.Get);
     Console.WriteLine();
 
-    await moveCar(basement);
-*/
-    Console.WriteLine("All done.  Press any key to exit...");
+    await moveCar(car2);
+
+    Console.WriteLine("Demo complete. Press any key to exit...");
     Console.ReadKey();
 }
 catch (HttpRequestException ex)
