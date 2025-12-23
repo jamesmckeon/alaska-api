@@ -130,7 +130,7 @@ Run by category:
   dotnet test --filter Category=Integration
 ```
 
-## Car Assignment Algorithm
+## Car Assignment Rules
 
 The system uses the following rules when assigning a car to a requested pickup floor, towards minimizing passenger wait time.
 
@@ -161,3 +161,6 @@ When a pickup is requested at floor 5:
 ### Idle Behavior
 
 Cars remain stationary at their current floor when idle, rather than returning to a home/lobby position.
+
+## Notes
+- App data is stored in memory only, i.e., it resets on application restart
